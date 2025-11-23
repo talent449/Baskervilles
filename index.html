@@ -2,50 +2,51 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>福爾摩斯：三章節修復版</title>
+    <title>福爾摩斯：白晝搜查版</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #111; font-family: 'Courier New', Courier, monospace; user-select: none; }
+        body { margin: 0; overflow: hidden; background-color: #333; font-family: 'Courier New', Courier, monospace; user-select: none; }
         
         /* UI 層 */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         
-        /* 準心：預設是空心圓，瞄準時變實心紅點 */
-        #crosshair { width: 10px; height: 10px; border: 2px solid rgba(255, 255, 255, 0.9); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: 0.1s; box-shadow: 0 0 5px black; }
-        #crosshair.active { background-color: #ff3333; border-color: #ff3333; width: 16px; height: 16px; opacity: 0.8; }
+        /* 準心 */
+        #crosshair { width: 10px; height: 10px; border: 2px solid rgba(0, 0, 0, 0.5); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: 0.1s; background: rgba(255,255,255,0.3); }
+        #crosshair.active { background-color: #ff3333; border-color: #ff0000; width: 16px; height: 16px; opacity: 1; }
         
-        #chapter-info { position: absolute; top: 20px; left: 20px; text-shadow: 2px 2px 4px #000; }
-        #chapter-title { color: #fff; font-size: 28px; font-weight: bold; font-family: 'Times New Roman', serif; margin: 0;}
-        #chapter-desc { color: #aaa; font-size: 14px; margin-top: 5px;}
+        #chapter-info { position: absolute; top: 20px; left: 20px; text-shadow: 1px 1px 2px #fff; color: #222; }
+        #chapter-title { font-size: 28px; font-weight: bold; font-family: 'Times New Roman', serif; margin: 0;}
+        #chapter-desc { font-size: 16px; margin-top: 5px; font-weight: bold;}
         
-        #clue-counter { position: absolute; top: 20px; right: 20px; color: #fff; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px; border: 1px solid #777; font-size: 18px; font-weight: bold;}
+        /* 計數器改為深色字體以適應白天背景 */
+        #clue-counter { position: absolute; top: 20px; right: 20px; color: #fff; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; font-size: 18px; font-weight: bold;}
         
-        #interact-hint { position: absolute; top: 60%; left: 50%; transform: translateX(-50%); color: #ffeb3b; font-weight: bold; opacity: 0; transition: opacity 0.2s; text-shadow: 0 0 5px black; font-size: 18px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px;}
+        #interact-hint { position: absolute; top: 60%; left: 50%; transform: translateX(-50%); color: #000; font-weight: bold; opacity: 0; transition: opacity 0.2s; text-shadow: 0 0 2px white; font-size: 18px; background: rgba(255,255,255,0.7); padding: 5px 10px; border-radius: 5px;}
 
         /* 對話框 */
         #dialogue-box { 
             position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); 
-            width: 70%; max-width: 800px; background: rgba(20, 25, 35, 0.95); border: 2px solid #667788; color: #fff; 
+            width: 70%; max-width: 800px; background: rgba(250, 245, 235, 0.95); border: 2px solid #554433; color: #222; 
             padding: 30px; font-size: 20px; line-height: 1.6; border-radius: 10px; 
-            display: none; pointer-events: auto; box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            display: none; pointer-events: auto; box-shadow: 0 0 30px rgba(0,0,0,0.3);
         }
         #dialogue-text { margin-bottom: 25px; min-height: 50px; }
         
         .input-area { display: none; gap: 10px; width: 100%; }
-        input { background: #111; border: 1px solid #555; color: white; padding: 15px; flex-grow: 1; font-family: inherit; font-size: 20px; border-radius: 5px;}
-        button { padding: 10px 30px; background: #334455; color: white; border: 1px solid #667788; cursor: pointer; font-family: inherit; font-size: 18px; transition: 0.2s; border-radius: 5px;}
-        button:hover { background: #556677; transform: scale(1.05); }
+        input { background: #fff; border: 1px solid #888; color: #000; padding: 15px; flex-grow: 1; font-family: inherit; font-size: 20px; border-radius: 5px;}
+        button { padding: 10px 30px; background: #445566; color: white; border: 1px solid #223344; cursor: pointer; font-family: inherit; font-size: 18px; transition: 0.2s; border-radius: 5px;}
+        button:hover { background: #667788; transform: scale(1.05); }
 
         /* 全螢幕遮罩 (過場用) */
         #screen-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #080808; color: white; display: flex; flex-direction: column;
+            background: #e0e0e0; color: #222; display: flex; flex-direction: column; /* 改為亮色背景 */
             justify-content: center; align-items: center; pointer-events: auto; z-index: 100;
             text-align: center;
         }
-        #overlay-content { max-width: 600px; padding: 40px; background: rgba(30,30,30,0.5); border-radius: 10px; border: 1px solid #444; }
-        h1 { color: #bf2e2e; font-family: 'Times New Roman', serif; font-size: 48px; margin: 0 0 20px 0; text-shadow: 0 0 10px #500;}
-        .subtitle { color: #bbb; margin-bottom: 40px; font-size: 18px; line-height: 1.5; }
-        #start-btn { background: #bf2e2e; border: none; font-weight: bold; font-size: 22px; padding: 15px 50px;}
+        #overlay-content { max-width: 600px; padding: 40px; background: rgba(255,255,255,0.8); border-radius: 10px; border: 1px solid #ccc; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        h1 { color: #bf2e2e; font-family: 'Times New Roman', serif; font-size: 48px; margin: 0 0 20px 0; }
+        .subtitle { color: #444; margin-bottom: 40px; font-size: 18px; line-height: 1.5; }
+        #start-btn { background: #bf2e2e; color: white; border: none; font-weight: bold; font-size: 22px; padding: 15px 50px; cursor: pointer; border-radius: 4px;}
         #start-btn:hover { background: #e04040; }
     </style>
 </head>
@@ -92,10 +93,10 @@
         let currentLevel = 1;
         let cluesFound = 0;
         let totalCluesInLevel = 0;
-        let isReading = false; // 是否正在閱讀對話
-        let interactableObjects = []; // 存放判定盒的陣列
-        let hoveredObject = null; // 當前準心指到的物件
-        let levelObjects = []; // 當前關卡所有物件 (用於清除)
+        let isReading = false; 
+        let interactableObjects = []; 
+        let hoveredObject = null; 
+        let levelObjects = []; 
 
         // --- 初始化 Three.js ---
         function init() {
@@ -105,48 +106,32 @@
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
-            renderer.physicallyCorrectLights = true; // 開啟物理光照，光線更自然
+            renderer.physicallyCorrectLights = true; 
+            renderer.outputEncoding = THREE.sRGBEncoding; // 讓色彩更鮮豔，適合白天
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // 控制器
             controls = new THREE.PointerLockControls(camera, document.body);
-            
-            // 監聽鎖定狀態 (解決無法移動的問題)
-            controls.addEventListener('lock', () => {
-                // 鎖定成功，遊戲繼續
-            });
-            controls.addEventListener('unlock', () => {
-                // 如果不是因為閱讀而被解鎖，就顯示暫停或保持等待
-                if (!isReading && document.getElementById('screen-overlay').style.display === 'none') {
-                    // 這裡可以做暫停選單，目前先留白
-                }
-            });
+            controls.addEventListener('unlock', () => {});
 
-            // 射線檢測
             raycaster = new THREE.Raycaster();
 
-            // 玩家手電筒 (固定在相機上)
-            const lantern = new THREE.SpotLight(0xfffaea, 5); // 暖黃光
+            // 雖然是白天，但保留手電筒以免玩家進入陰影處看不見，強度降低一點
+            const lantern = new THREE.SpotLight(0xfffaea, 2); 
             lantern.position.set(0, 0, 0);
-            lantern.angle = Math.PI / 3; // 60度廣角
-            lantern.penumbra = 0.5; // 邊緣柔和
+            lantern.angle = Math.PI / 3;
+            lantern.penumbra = 0.5;
             lantern.decay = 2;
-            lantern.distance = 60; // 照得遠
-            lantern.castShadow = true;
+            lantern.distance = 40;
             camera.add(lantern);
-            scene.add(camera); // 將相機加入場景
+            scene.add(camera);
             
-            // 監聽視窗大小變化
             window.addEventListener('resize', onWindowResize, false);
-            
-            // 啟動渲染循環
             animate();
         }
 
         // --- 關卡系統 ---
 
         function clearLevel() {
-            // 清除除了相機和手電筒以外的所有東西
             for (let i = levelObjects.length - 1; i >= 0; i--) {
                 scene.remove(levelObjects[i]);
             }
@@ -154,8 +139,6 @@
             interactableObjects = [];
             cluesFound = 0;
             hoveredObject = null;
-            
-            // 清除霧氣效果
             scene.fog = null;
             scene.background = new THREE.Color(0x000000);
         }
@@ -164,131 +147,137 @@
             clearLevel();
             currentLevel = level;
             
-            // 重置玩家位置
             camera.position.set(0, 1.6, 0);
             camera.rotation.set(0, 0, 0);
-            controls.getObject().position.set(0, 1.6, 0); // 強制歸零
-            velocity.set(0, 0, 0); // 停止滑行
+            controls.getObject().position.set(0, 1.6, 0);
+            velocity.set(0, 0, 0);
 
             const title = document.getElementById('chapter-title');
             const desc = document.getElementById('chapter-desc');
             const counter = document.getElementById('clue-counter');
 
             if (level === 1) {
-                // --- 第一關：貝克街 ---
+                // --- 第一關：貝克街 (室內，維持明亮暖色) ---
                 title.innerText = "Chapter 1";
-                desc.innerText = "貝克街 221B";
+                desc.innerText = "貝克街 221B (室內)";
                 totalCluesInLevel = 2;
                 
-                // 1. 環境光 (暖色室內)
-                setupLighting(0x1a1510, 0xffddaa, 1.2); 
+                setupLighting(0xE0D0C0, 0xffeebb, 1.5); // 牆壁顏色，環境光顏色，強度
                 
-                // 2. 地板
-                createFloor(0x5c4033);
+                // 額外的室內點光源
+                const lamp = new THREE.PointLight(0xffaa00, 3, 10);
+                lamp.position.set(0, 3, 0);
+                scene.add(lamp); levelObjects.push(lamp);
+                
+                createFloor(0x8B4513); // 木地板
 
-                // 3. 物件
-                createBox(0, 0.5, -3, 3, 0.1, 1.5, 0x3d2e1e); // 桌子
-                createBox(-1.2, 0, -3, 0.2, 1, 0.2, 0x3d2e1e);
-                createBox(1.2, 0, -3, 0.2, 1, 0.2, 0x3d2e1e);
+                // 桌子
+                createBox(0, 0.5, -3, 3, 0.1, 1.5, 0x5D4037);
+                createBox(-1.2, 0, -3, 0.2, 1, 0.2, 0x5D4037);
+                createBox(1.2, 0, -3, 0.2, 1, 0.2, 0x5D4037);
 
-                // 線索 A: 手杖 (判定盒 1.0)
+                // 線索
                 const caneGeo = new THREE.CylinderGeometry(0.04, 0.03, 0.8, 8);
                 caneGeo.rotateZ(Math.PI / 2.5);
-                const caneMat = new THREE.MeshStandardMaterial({ color: 0x221100 });
-                createInteractable(caneGeo, caneMat, 0.5, 0.6, -3, 
-                    "【線索 1/2】一根遺落的手杖。金屬環上刻著『致 C.C.H 的 James Mortimer』。手杖底部磨損嚴重，且底部沾滿泥土，顯示主人常拄著手杖走路。", 1.0);
+                createInteractable(caneGeo, new THREE.MeshStandardMaterial({ color: 0x3E2723 }), 0.5, 0.6, -3, 
+                    "【線索 1/2】遺落的手杖。上面刻著『C.C.H』。底部磨損顯示主人常在鄉間徒步。", 1.0);
 
-                // 線索 B: 筆記 (判定盒 0.8)
                 const noteGeo = new THREE.PlaneGeometry(0.4, 0.5);
                 noteGeo.rotateX(-Math.PI/2);
-                const noteMat = new THREE.MeshBasicMaterial({ color: 0xffffee, side: THREE.DoubleSide });
-                createInteractable(noteGeo, noteMat, -0.5, 0.56, -3, 
-                    "【線索 2/2】華生的筆記：『莫蒂默先生忘帶手杖了。這是一個絕佳的演繹機會。我們需要推測他的職業。』", 0.8);
+                createInteractable(noteGeo, new THREE.MeshStandardMaterial({ color: 0xffffee, side: THREE.DoubleSide }), -0.5, 0.56, -3, 
+                    "【線索 2/2】華生的筆記：『莫蒂默先生忘帶手杖了。我們需要從手杖推測他的職業。』", 0.8);
                 
-                // 壁爐裝飾
-                const fireLight = new THREE.PointLight(0xff4400, 2, 8);
-                fireLight.position.set(3, 1, 3);
-                scene.add(fireLight); levelObjects.push(fireLight);
+                // 窗戶光 (模擬白天)
+                const winLight = new THREE.DirectionalLight(0xffffff, 2);
+                winLight.position.set(-5, 5, -2);
+                scene.add(winLight); levelObjects.push(winLight);
 
             } else if (level === 2) {
-                // --- 第二關：荒原 (明亮月夜修復版) ---
+                // --- 第二關：荒原 (白晝版) ---
                 title.innerText = "Chapter 2";
-                desc.innerText = "達特穆爾荒原 (月夜)";
+                desc.innerText = "達特穆爾荒原 (白天)";
                 totalCluesInLevel = 3;
 
-                // 1. 環境 (深藍夜空，不是全黑)
-                scene.background = new THREE.Color(0x111122);
-                // 霧氣變淡，讓玩家能看遠
-                scene.fog = new THREE.FogExp2(0x111122, 0.015); 
+                // 1. 天空：蔚藍色
+                scene.background = new THREE.Color(0x87CEEB);
+                // 霧：白色淡霧，能見度極高
+                scene.fog = new THREE.FogExp2(0xffffff, 0.005); 
                 
-                // 2. 光照 (大幅增強)
-                // 環境光 (藍灰色，照亮暗部)
-                const ambient = new THREE.AmbientLight(0x8899aa, 1.0);
+                // 2. 太陽光 (強烈白光)
+                const sun = new THREE.DirectionalLight(0xfffee0, 2.0);
+                sun.position.set(50, 100, 50);
+                sun.castShadow = true;
+                sun.shadow.mapSize.width = 2048;
+                sun.shadow.mapSize.height = 2048;
+                scene.add(sun); levelObjects.push(sun);
+                
+                // 環境光 (讓陰影處也是亮的)
+                const ambient = new THREE.AmbientLight(0x8899aa, 0.8);
                 scene.add(ambient); levelObjects.push(ambient);
-                
-                // 月光 (方向光)
-                const moon = new THREE.DirectionalLight(0xaaccff, 1.5);
-                moon.position.set(20, 50, 20);
-                moon.castShadow = true;
-                scene.add(moon); levelObjects.push(moon);
 
-                // 3. 地面 (深綠色草地，不是全黑)
-                createFloor(0x112211);
+                // 3. 地面 (綠色草地)
+                createFloor(0x228B22); // Forest Green
 
-                // 4. 樹木 (隨機生成)
-                for(let i=0; i<20; i++) {
+                // 4. 樹木
+                for(let i=0; i<25; i++) {
                     const x = (Math.random()-0.5)*80;
                     const z = (Math.random()-0.5)*80;
-                    if(Math.abs(x)>5) createTree(x, z);
+                    if(Math.abs(x)>5) createTree(x, z, 0x3E2723, 0x006400); // 樹幹棕色，樹葉深綠
                 }
 
-                // 線索 A: 煙灰 (判定盒 1.5)
+                // 線索 A: 煙灰
                 const ashGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.05);
-                createInteractable(ashGeo, new THREE.MeshBasicMaterial({color:0xcccccc}), 3, 0.05, -5,
-                    "【線索 1/3】雪茄煙灰。查爾斯爵士在這裡站了至少十分鐘...他在等誰？", 1.5);
+                createInteractable(ashGeo, new THREE.MeshStandardMaterial({color:0x808080}), 3, 0.05, -5,
+                    "【線索 1/3】雪茄煙灰。昨晚查爾斯爵士在這裡站了很久。", 1.5);
 
-                // 線索 B: 腳印 (判定盒 2.0，非常好點)
+                // 線索 B: 腳印
                 const printGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.02);
-                createInteractable(printGeo, new THREE.MeshBasicMaterial({color:0x050505}), -2, 0.05, -8,
-                    "【線索 2/3】泥土上有巨大的獵犬腳印！但屍體上沒有任何咬痕。這只狗沒有攻擊他。", 2.0);
+                createInteractable(printGeo, new THREE.MeshStandardMaterial({color:0x3E2723}), -2, 0.05, -8,
+                    "【線索 2/3】泥土上有巨大的獵犬腳印！即使是白天看也非常驚人。", 2.0);
 
-                // 線索 C: 柵欄 (判定盒 3.0，巨大)
+                // 線索 C: 柵欄
                 const gateGeo = new THREE.BoxGeometry(2.5, 1.5, 0.1);
-                createInteractable(gateGeo, new THREE.MeshStandardMaterial({color:0x554433}), 0, 0.75, -12,
-                    "【線索 3/3】通往荒原的柵欄門。查爾斯爵士死前正在這裡眺望荒原。周遭沒有凌亂的腳印，表示他沒有逃跑。", 3.0);
+                createInteractable(gateGeo, new THREE.MeshStandardMaterial({color:0x8D6E63}), 0, 0.75, -12,
+                    "【線索 3/3】通往荒原的柵欄門。查爾斯爵士就是在這裡眺望荒原，隨後倒下。", 3.0);
 
             } else if (level === 3) {
-                // --- 第三關：泥沼 ---
+                // --- 第三關：泥沼 (白天沼澤版) ---
                 title.innerText = "Chapter 3";
-                desc.innerText = "格林彭泥沼";
+                desc.innerText = "格林彭泥沼 (陰天)";
                 totalCluesInLevel = 2;
 
-                // 1. 環境 (綠色詭異氛圍)
-                scene.background = new THREE.Color(0x051005);
-                scene.fog = new THREE.FogExp2(0x051505, 0.03); 
+                // 1. 背景：灰綠色 (沼澤霧氣感)
+                scene.background = new THREE.Color(0xaacc99);
+                scene.fog = new THREE.FogExp2(0xaacc99, 0.015); // 稍微濃一點的霧，但也是亮的
 
-                // 2. 光照
-                const swampAmb = new THREE.AmbientLight(0x446644, 0.8);
+                // 2. 光照：漫射光 (陰天感)
+                const swampSun = new THREE.DirectionalLight(0xffffff, 1.2);
+                swampSun.position.set(-20, 50, -20);
+                swampSun.castShadow = true;
+                scene.add(swampSun); levelObjects.push(swampSun);
+                
+                const swampAmb = new THREE.AmbientLight(0xeeffee, 0.9); // 很亮的環境光
                 scene.add(swampAmb); levelObjects.push(swampAmb);
                 
                 // 3. 地面 (泥濘色)
-                createFloor(0x1a221a);
+                createFloor(0x556B2F); // Dark Olive Green
 
                 // 石頭
                 for(let i=0; i<15; i++) {
-                    createBox((Math.random()-0.5)*50, 0.2, (Math.random()-0.5)*50, 1, 0.4, 1, 0x223322);
+                    createBox((Math.random()-0.5)*50, 0.2, (Math.random()-0.5)*50, 1, 0.4, 1, 0x4B5320);
                 }
 
-                // 線索 A: 磷光顏料 (判定盒 1.5)
+                // 線索 A: 磷光顏料
                 const paintGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.4);
-                const paintMat = new THREE.MeshStandardMaterial({color: 0xccffcc, emissive: 0x44ff44, emissiveIntensity: 0.5});
+                // 即使是白天，讓它保持亮綠色，看起來像化學藥劑
+                const paintMat = new THREE.MeshStandardMaterial({color: 0x00FF00, emissive: 0x00AA00, emissiveIntensity: 0.2});
                 createInteractable(paintGeo, paintMat, 2, 0.2, -6,
-                    "【線索 1/2】一個丟棄的化學罐子，裡面是發光的『磷』。", 1.5);
+                    "【線索 1/2】一個丟棄的化學罐子。裡面是綠色的化學糊狀物，塗在身上會發光。", 1.5);
 
-                // 線索 B: 廢墟 (判定盒 4.0)
+                // 線索 B: 廢墟
                 const ruinGeo = new THREE.BoxGeometry(4, 2, 0.5);
-                createInteractable(ruinGeo, new THREE.MeshStandardMaterial({color: 0x333333}), -3, 1, -10,
-                    "【線索 2/2】沼澤中心的石屋廢墟。史泰普頓就是在這裡把獵犬藏起來的。", 4.0);
+                createInteractable(ruinGeo, new THREE.MeshStandardMaterial({color: 0x696969}), -3, 1, -10,
+                    "【線索 2/2】沼澤中心的石屋廢墟。史泰普頓就是在這裡飼養那隻獵犬的。", 4.0);
             }
 
             counter.innerText = `線索: 0/${totalCluesInLevel}`;
@@ -298,7 +287,7 @@
 
         function setupLighting(bgColor, ambColor, ambIntensity) {
             scene.background = new THREE.Color(bgColor);
-            scene.fog = new THREE.Fog(bgColor, 2, 15);
+            scene.fog = new THREE.Fog(bgColor, 5, 20);
             const light = new THREE.AmbientLight(ambColor, ambIntensity);
             scene.add(light);
             levelObjects.push(light);
@@ -306,7 +295,7 @@
 
         function createFloor(color) {
             const geo = new THREE.PlaneGeometry(100, 100);
-            const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.8 });
+            const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.9 });
             const mesh = new THREE.Mesh(geo, mat);
             mesh.rotation.x = -Math.PI / 2;
             mesh.receiveShadow = true;
@@ -323,17 +312,25 @@
             mesh.receiveShadow = true;
             scene.add(mesh);
             levelObjects.push(mesh);
-            return mesh;
         }
 
-        function createTree(x, z) {
-            const geo = new THREE.CylinderGeometry(0.2, 0.5, 5, 8);
-            const mat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x, 2.5, z);
-            mesh.castShadow = true;
-            scene.add(mesh);
-            levelObjects.push(mesh);
+        function createTree(x, z, trunkC, leafC) {
+            const trunkGeo = new THREE.CylinderGeometry(0.2, 0.5, 4, 8);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: trunkC });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.set(x, 2, z);
+            trunk.castShadow = true;
+            scene.add(trunk);
+            levelObjects.push(trunk);
+            
+            // 樹葉 (簡單的圓錐體)
+            const leafGeo = new THREE.ConeGeometry(1.5, 3, 8);
+            const leafMat = new THREE.MeshStandardMaterial({ color: leafC });
+            const leaf = new THREE.Mesh(leafGeo, leafMat);
+            leaf.position.set(x, 4.5, z);
+            leaf.castShadow = true;
+            scene.add(leaf);
+            levelObjects.push(leaf);
         }
 
         // *** 核心：互動與判定盒系統 ***
@@ -345,27 +342,29 @@
             scene.add(visual);
             levelObjects.push(visual);
 
-            // 2. 隱形判定盒 (這才是你真正點擊到的東西)
-            // 創建一個透明的 Box，包在物體外面
+            // 2. 隱形判定盒
             const boxGeo = new THREE.BoxGeometry(hitboxScale, hitboxScale, hitboxScale);
             const boxMat = new THREE.MeshBasicMaterial({ visible: false, wireframe: true });
             const hitbox = new THREE.Mesh(boxGeo, boxMat);
             hitbox.position.set(x, y, z);
             
-            // 綁定資料
             hitbox.userData = {
                 description: desc,
                 collected: false,
-                targetVisual: visual // 連結到視覺模型，以便變色
+                targetVisual: visual 
             };
 
             scene.add(hitbox);
             levelObjects.push(hitbox);
-            interactableObjects.push(hitbox); // 加入可互動列表
+            interactableObjects.push(hitbox); 
 
-            // 3. 提示光點 (讓線索在遠處也能被看到)
-            const dot = new THREE.PointLight(0xffffff, 1, 4);
-            dot.position.set(x, y+0.5, z);
+            // 3. 提示標記 (白天改用顏色鮮豔的小球，而不是光點)
+            const dotGeo = new THREE.SphereGeometry(0.1);
+            const dotMat = new THREE.MeshBasicMaterial({ color: 0xFFFF00 }); // 黃色標記
+            const dot = new THREE.Mesh(dotGeo, dotMat);
+            dot.position.set(x, y + 0.6, z);
+            
+            // 讓標記上下浮動動畫 (之後在 animate 裡實作比較複雜，這裡先靜態顯示)
             scene.add(dot);
             levelObjects.push(dot);
         }
@@ -385,18 +384,15 @@
         const crosshair = document.getElementById('crosshair');
         const interactHint = document.getElementById('interact-hint');
 
-        // 開始/切換章節按鈕
         startBtn.addEventListener('click', () => {
             overlay.style.display = 'none';
             setupLevel(currentLevel);
-            // 必須在用戶點擊後立即鎖定
             controls.lock(); 
         });
 
-        // 顯示對話/線索
         function showDialogue(text, isPuzzle = false) {
             isReading = true;
-            controls.unlock(); // 解鎖滑鼠以操作 UI
+            controls.unlock(); 
             dialogueBox.style.display = 'block';
             dialogueText.innerHTML = text;
 
@@ -414,7 +410,7 @@
         closeDialogue.addEventListener('click', () => {
             dialogueBox.style.display = 'none';
             isReading = false;
-            controls.lock(); // 關閉對話後重新鎖定
+            controls.lock(); 
             checkProgress();
         });
 
@@ -422,7 +418,7 @@
             if (cluesFound >= totalCluesInLevel) {
                 setTimeout(() => {
                     let q = "";
-                    if(currentLevel === 1) q = "華生，根據手杖判斷，莫蒂默醫生的工作地點是在哪裡？<br>(提示：鄉村 Country / 城市 City / 醫院 Hospital)";
+                    if(currentLevel === 1) q = "華生，根據手杖判斷，莫蒂默醫生的工作地點是在哪裡？<br>(選項：鄉村 Country / 城市 City / 醫院 Hospital)";
                     if(currentLevel === 2) q = "屍體沒有外傷，只有驚恐的表情。<br>真正的死因是什麼？<br>(選項：恐懼 Fear / 高血壓 Hipertension / 獵犬 Hound)";
                     if(currentLevel === 3) q = "結案時刻：<br>兇手在狗身上塗了什麼化學物質讓牠發光？<br>(選項：磷 Phosphorus / 鎂 Magnesium / 銅 Copper)";
                     showDialogue(q, true);
@@ -443,7 +439,7 @@
                 isReading = false;
                 triggerNextLevel();
             } else {
-                alert("推理錯誤，請重新思考。");
+                alert("推理錯誤。");
                 answerField.focus();
             }
         });
@@ -454,37 +450,31 @@
             
             if (currentLevel > 3) {
                 overlayTitle.innerText = "案件終結";
-                overlayMsg.innerHTML = "做得好，華生。<br>我們成功揭穿了巴斯克爾獵犬的真相。<br>這是一場為了遺產而精心策劃的謀殺。";
+                overlayMsg.innerHTML = "做得好，華生。<br>我們在白晝下揭穿了這場陰謀。<br>巴斯克爾的詛咒已破除。";
                 startBtn.innerText = "重新遊玩";
                 startBtn.onclick = () => location.reload();
             } else {
-                // 準備下一關的文案
                 if(currentLevel === 2) {
                     overlayTitle.innerText = "Chapter 2";
-                    overlayMsg.innerHTML = "我們來到了達特穆爾荒原。<br>這裡正是查爾斯爵士喪命的地方...";
+                    overlayMsg.innerHTML = "我們來到了達特穆爾荒原。<br>這是一個晴朗的日子，我們將看清事發現場...";
                 } else if (currentLevel === 3) {
                     overlayTitle.innerText = "Chapter 3";
-                    overlayMsg.innerHTML = "線索指向了格林彭泥沼。<br>那裡隱藏著兇手的巢穴...";
+                    overlayMsg.innerHTML = "線索指向了格林彭泥沼。<br>即使是白天，那裡的沼澤依然危險...";
                 }
                 startBtn.innerText = "進入下一章";
-                // startBtn 的 onclick 事件已經綁定在上面，會讀取更新後的 currentLevel
             }
         }
 
-        // --- 滑鼠點擊偵測 ---
+        // --- 互動偵測 ---
         document.addEventListener('mousedown', (e) => {
-            // 只有在遊戲進行中(鎖定狀態)且準心有指到東西時才觸發
             if (controls.isLocked && hoveredObject) {
                 const data = hoveredObject.userData;
-                
-                // 變色 (標記已讀)
                 if (!data.collected) {
                     data.collected = true;
                     cluesFound++;
                     document.getElementById('clue-counter').innerText = `線索: ${cluesFound}/${totalCluesInLevel}`;
-                    
                     if (data.targetVisual.material.color) {
-                        data.targetVisual.material.color.setHex(0x555555); // 變暗
+                        data.targetVisual.material.color.setHex(0x333333); 
                     }
                 }
                 showDialogue(data.description);
@@ -531,7 +521,6 @@
             if (controls.isLocked) {
                 const delta = clock.getDelta();
 
-                // 物理移動計算
                 velocity.x -= velocity.x * 10.0 * delta;
                 velocity.z -= velocity.z * 10.0 * delta;
 
@@ -545,11 +534,10 @@
                 controls.moveRight(-velocity.x * delta);
                 controls.moveForward(-velocity.z * delta);
 
-                // 射線檢測 (Raycasting)
-                raycaster.setFromCamera(new THREE.Vector2(0, 0), camera); // 螢幕中心
+                raycaster.setFromCamera(new THREE.Vector2(0, 0), camera); 
                 const intersects = raycaster.intersectObjects(interactableObjects);
 
-                if (intersects.length > 0 && intersects[0].distance < 8) { // 8單位距離內可互動
+                if (intersects.length > 0 && intersects[0].distance < 10) { 
                     hoveredObject = intersects[0].object;
                     crosshair.classList.add('active');
                     interactHint.style.opacity = 1;
@@ -559,18 +547,15 @@
                     interactHint.style.opacity = 0;
                 }
             } else {
-                // 如果未鎖定，重置 delta 避免下次移動爆衝
                 clock.getDelta(); 
             }
 
             renderer.render(scene, camera);
         }
 
-        // 啟動遊戲
         init();
-        setupLevel(1); // 預先加載第一關，但在 overlay 點擊前不開始
+        setupLevel(1); 
 
     </script>
 </body>
-
 </html>
