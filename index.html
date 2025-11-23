@@ -196,7 +196,7 @@
                 caneGeo.rotateZ(Math.PI / 2.5);
                 const caneMat = new THREE.MeshStandardMaterial({ color: 0x221100 });
                 createInteractable(caneGeo, caneMat, 0.5, 0.6, -3, 
-                    "【線索 1/2】一根遺落的手杖。金屬環上刻著『致 C.C.H 的 James Mortimer』。手杖底部磨損嚴重，顯示主人常在鄉間徒步。", 1.0);
+                    "【線索 1/2】一根遺落的手杖。金屬環上刻著『致 C.C.H 的 James Mortimer』。手杖底部磨損嚴重，且底部沾滿泥土，顯示主人常拄著手杖走路。", 1.0);
 
                 // 線索 B: 筆記 (判定盒 0.8)
                 const noteGeo = new THREE.PlaneGeometry(0.4, 0.5);
@@ -255,7 +255,7 @@
                 // 線索 C: 柵欄 (判定盒 3.0，巨大)
                 const gateGeo = new THREE.BoxGeometry(2.5, 1.5, 0.1);
                 createInteractable(gateGeo, new THREE.MeshStandardMaterial({color:0x554433}), 0, 0.75, -12,
-                    "【線索 3/3】通往荒原的柵欄門。查爾斯爵士死前正在這裡眺望荒原。他在逃跑前就被嚇死了。", 3.0);
+                    "【線索 3/3】通往荒原的柵欄門。查爾斯爵士死前正在這裡眺望荒原。周遭沒有凌亂的腳印，表示他沒有逃跑。", 3.0);
 
             } else if (level === 3) {
                 // --- 第三關：泥沼 ---
@@ -283,7 +283,7 @@
                 const paintGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.4);
                 const paintMat = new THREE.MeshStandardMaterial({color: 0xccffcc, emissive: 0x44ff44, emissiveIntensity: 0.5});
                 createInteractable(paintGeo, paintMat, 2, 0.2, -6,
-                    "【線索 1/2】一個丟棄的化學罐子，裡面是發光的『磷』。兇手把這個塗在狗身上，製造靈異假象。", 1.5);
+                    "【線索 1/2】一個丟棄的化學罐子，裡面是發光的『磷』。", 1.5);
 
                 // 線索 B: 廢墟 (判定盒 4.0)
                 const ruinGeo = new THREE.BoxGeometry(4, 2, 0.5);
@@ -572,4 +572,5 @@
 
     </script>
 </body>
+
 </html>
